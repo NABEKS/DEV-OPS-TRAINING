@@ -107,3 +107,27 @@ resource "aws_route" "Naa-IGW-Route-1" {
   destination_cidr_block    = "0.0.0.0/0"
   } 
 
+
+# Configure Elastic IP
+resource "aws_eip" "Naa-EIP-1" {
+  vpc                       = true
+  associate_with_private_ip = "10.0.0.3"
+  depends_on                = [aws_internet_gateway.Naa-IGW-1]
+}
+
+
+# Configure Nat Gateway for Internet through Public Subnet
+resource "aws_nat_gateway" "Naa-Nat-GW-1" {
+  allocation_id = aws_eip.Naa-EIP-1.id
+  subnet_id     = aws_subnet.Pub-Subnet1.id
+  depends_on = [aws_eip.Naa-EIP-1]
+}
+
+
+# Associate the Private Route Table with the Nat Gateway
+resource "aws_route" "Naa-Nat-GW-Ass-Priv-RT-1" {
+  route_table_id            = aws_route_table.Naa-Private-RT.id 
+  nat_gateway_id            = aws_nat_gateway.Naa-Nat-GW-1.id
+  destination_cidr_block    = "0.0.0.0/0"
+  } 
+
